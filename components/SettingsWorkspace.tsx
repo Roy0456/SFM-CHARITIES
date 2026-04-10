@@ -9,12 +9,13 @@ import {
   managedUsers,
   moduleAccessRules,
   organizationSettings,
-  platformSettings,
+  systemSettings,
   themePresets,
   themeSettings,
   type ManagedUser,
   type ManagedUserStatus,
   type ModuleAccessRule,
+  type SystemSettings,
   type ThemePreset,
 } from '@/lib/mockSettings';
 import { MEDIUM_LIST_PAGE_SIZE_OPTIONS } from '@/lib/pagination';
@@ -23,10 +24,10 @@ import { usePagination } from '@/lib/usePagination';
 type SettingsTab = 'general' | 'users' | 'appearance' | 'access';
 
 const settingsTabs: Array<{ id: SettingsTab; label: string; description: string }> = [
-  { id: 'general', label: 'Detalles', description: 'Identidad y datos operacionales' },
-  { id: 'users', label: 'Usuarios', description: 'Equipo, roles y estados' },
-  { id: 'appearance', label: 'Colores', description: 'Apariencia y tono visual' },
-  { id: 'access', label: 'Permisos', description: 'Visibilidad por rol' },
+  { id: 'general', label: 'Generales', description: 'Datos institucionales' },
+  { id: 'users', label: 'Usuarios', description: 'Personal y accesos' },
+  { id: 'appearance', label: 'Colores', description: 'Tema de la interfaz' },
+  { id: 'access', label: 'Permisos', description: 'Acceso por rol' },
 ];
 
 const managedUserStatusLabels: Record<ManagedUserStatus, string> = {
@@ -34,6 +35,15 @@ const managedUserStatusLabels: Record<ManagedUserStatus, string> = {
   invited: 'Invitado',
   paused: 'Pausado',
 };
+
+function getInitials(name: string) {
+  return name
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? '')
+    .join('');
+}
 
 function formatDateTime(value: string) {
   return new Intl.DateTimeFormat('es-PR', {
@@ -101,16 +111,52 @@ function matchesTheme(theme: typeof themeSettings, preset: ThemePreset) {
   );
 }
 
-export function SettingsWorkspace() {
+function isSameTheme(left: typeof themeSettings, right: typeof themeSettings) {
+  return (
+    left.mode === right.mode &&
+    left.accent === right.accent &&
+    left.warm === right.warm &&
+    left.bg === right.bg &&
+    left.bgSoft === right.bgSoft &&
+    left.surface === right.surface &&
+    left.surfaceStrong === right.surfaceStrong &&
+    left.cardBg === right.cardBg &&
+    left.cardBgStrong === right.cardBgStrong &&
+    left.ink === right.ink &&
+    left.muted === right.muted &&
+    left.mutedStrong === right.mutedStrong &&
+    left.line === right.line &&
+    left.lineStrong === right.lineStrong &&
+    left.sidebarBg === right.sidebarBg
+  );
+}
+
+type SettingsWorkspaceProps = {
+  appVersion: string;
+  environmentLabel: string;
+  hostingLabel: string;
+};
+
+export function SettingsWorkspace({
+  appVersion,
+  environmentLabel,
+  hostingLabel,
+}: SettingsWorkspaceProps) {
+  const [currentManagedUserId] = useState(
+    () =>
+      managedUsers.find((item) => item.email === currentUser.email)?.userId ??
+      managedUsers.find((item) => item.name === currentUser.name)?.userId ??
+      null,
+  );
   const [activeTab, setActiveTab] = useState<SettingsTab>('general');
   const [organization, setOrganization] = useState(organizationSettings);
-  const [platform, setPlatform] = useState(platformSettings);
+  const [system, setSystem] = useState(systemSettings);
   const [users, setUsers] = useState(managedUsers);
   const [theme, setTheme] = useState(themeSettings);
   const [accessRules, setAccessRules] = useState(moduleAccessRules);
 
   const [isOrganizationModalOpen, setOrganizationModalOpen] = useState(false);
-  const [isPlatformModalOpen, setPlatformModalOpen] = useState(false);
+  const [isSystemModalOpen, setSystemModalOpen] = useState(false);
   const [isUserModalOpen, setUserModalOpen] = useState(false);
   const [isThemeModalOpen, setThemeModalOpen] = useState(false);
   const [isAccessModalOpen, setAccessModalOpen] = useState(false);
@@ -118,7 +164,7 @@ export function SettingsWorkspace() {
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
 
   const [organizationForm, setOrganizationForm] = useState(organizationSettings);
-  const [platformForm, setPlatformForm] = useState(platformSettings);
+  const [systemForm, setSystemForm] = useState<SystemSettings>(systemSettings);
   const [themeForm, setThemeForm] = useState(themeSettings);
   const [accessForm, setAccessForm] = useState(moduleAccessRules);
   const [userForm, setUserForm] = useState<ManagedUser>({
@@ -162,10 +208,25 @@ export function SettingsWorkspace() {
     root.style.setProperty('--sidebar-shell-border', withAlpha(sidebarForeground, 0.18));
   }, [theme]);
 
-  const activeUsersCount = useMemo(() => users.filter((item) => item.status === 'active').length, [users]);
-  const invitedUsersCount = useMemo(() => users.filter((item) => item.status === 'invited').length, [users]);
-  const usersPagination = usePagination(users, MEDIUM_LIST_PAGE_SIZE_OPTIONS[0]);
-  const activeThemePreset = useMemo(() => themePresets.find((preset) => matchesTheme(theme, preset)) ?? null, [theme]);
+  const activeManagedUser = useMemo(
+    () => (currentManagedUserId ? users.find((item) => item.userId === currentManagedUserId) ?? null : null),
+    [currentManagedUserId, users],
+  );
+  const visibleUsers = useMemo(
+    () => users.filter((item) => (currentManagedUserId ? item.userId !== currentManagedUserId : true)),
+    [currentManagedUserId, users],
+  );
+  const activeUserProfile = activeManagedUser
+    ? {
+        ...currentUser,
+        name: activeManagedUser.name,
+        title: activeManagedUser.title,
+        email: activeManagedUser.email,
+        accessLevel: activeManagedUser.accessLevel,
+      }
+    : currentUser;
+  const usersPagination = usePagination(visibleUsers, MEDIUM_LIST_PAGE_SIZE_OPTIONS[0]);
+  const selectedThemePreset = useMemo(() => themePresets.find((preset) => matchesTheme(themeForm, preset)) ?? null, [themeForm]);
   const lightThemePresets = useMemo(() => themePresets.filter((preset) => preset.mode === 'light'), []);
   const darkThemePresets = useMemo(() => themePresets.filter((preset) => preset.mode === 'dark'), []);
 
@@ -174,9 +235,9 @@ export function SettingsWorkspace() {
     setOrganizationModalOpen(true);
   }
 
-  function openPlatformModal() {
-    setPlatformForm(platform);
-    setPlatformModalOpen(true);
+  function openSystemModal() {
+    setSystemForm(system);
+    setSystemModalOpen(true);
   }
 
   function openThemeModal() {
@@ -187,7 +248,6 @@ export function SettingsWorkspace() {
   function applyThemePreset(preset: ThemePreset) {
     const { themeId: _themeId, name: _name, description: _description, ...nextTheme } = preset;
 
-    setTheme(nextTheme);
     setThemeForm(nextTheme);
   }
 
@@ -223,14 +283,14 @@ export function SettingsWorkspace() {
     setOrganizationModalOpen(false);
   }
 
-  function handlePlatformSubmit(event: FormEvent<HTMLFormElement>) {
+  function handleSystemSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setPlatform({
-      ...platformForm,
-      userLimit: Number(platformForm.userLimit),
-      caseLimit: Number(platformForm.caseLimit),
+    setSystem({
+      ...systemForm,
+      userLimit: Number(systemForm.userLimit),
+      caseLimit: Number(systemForm.caseLimit),
     });
-    setPlatformModalOpen(false);
+    setSystemModalOpen(false);
   }
 
   function handleThemeSubmit(event: FormEvent<HTMLFormElement>) {
@@ -265,43 +325,47 @@ export function SettingsWorkspace() {
   }
 
   const themeSwatches = [
-    { label: 'Fondo', value: theme.bg },
-    { label: 'Tarjeta', value: theme.cardBgStrong },
-    { label: 'Sidebar', value: theme.sidebarBg },
-    { label: 'Acento', value: theme.accent },
-    { label: 'Calido', value: theme.warm },
+    { label: 'Fondo', value: themeForm.bg },
+    { label: 'Tarjeta', value: themeForm.cardBgStrong },
+    { label: 'Sidebar', value: themeForm.sidebarBg },
+    { label: 'Acento', value: themeForm.accent },
+    { label: 'Calido', value: themeForm.warm },
   ];
 
   return (
     <section className="page-stack">
       <PageHeader
         eyebrow="Configuracion"
-        title="Centro de configuracion"
-        description="Gestiona identidad institucional, usuarios internos, colores base y reglas de visibilidad sin mezclar estas tareas con la operacion diaria."
+        title="Administracion del sistema"
+        description="Administra informacion institucional, usuarios, apariencia, permisos y datos tecnicos del sistema."
         actions={
           <div className="settings-header-actions">
-            <span className="results-pill">Solo admin o superior</span>
+            <span className="results-pill">{appVersion}</span>
+            <span className="results-pill">Solo administracion</span>
           </div>
         }
       />
 
       <section className="summary-grid">
         <article className="summary-card">
-          <span>Capacidad de casos</span>
-          <strong>{platform.caseLimit.toLocaleString('es-PR')}</strong>
-          <p>Tope operativo disponible bajo la configuracion actual.</p>
+          <span>Version actual</span>
+          <strong>{appVersion}</strong>
+          <p>Version visible en toda la interfaz.</p>
         </article>
         <article className="summary-card">
-          <span>Usuarios habilitados</span>
-          <strong>{activeUsersCount}</strong>
-          <p>
-            {invitedUsersCount} invitado(s) pendiente(s) · limite de {platform.userLimit}.
-          </p>
+          <span>Zona horaria</span>
+          <strong>{system.timezone}</strong>
+          <p>Referencia oficial para fechas y registros.</p>
         </article>
         <article className="summary-card">
-          <span>Perfil actual</span>
-          <strong>{accessLevelLabels[currentUser.accessLevel]}</strong>
-          <p>{currentUser.title}</p>
+          <span>Capacidad de expedientes</span>
+          <strong>{system.caseLimit.toLocaleString('es-PR')}</strong>
+          <p>Tope interno configurado para la operacion.</p>
+        </article>
+        <article className="summary-card">
+          <span>Entorno actual</span>
+          <strong>{environmentLabel}</strong>
+          <p>{hostingLabel} · datos simulados</p>
         </article>
       </section>
 
@@ -322,12 +386,12 @@ export function SettingsWorkspace() {
       </section>
 
       {activeTab === 'general' ? (
-        <section className="settings-card-grid">
+        <section className="settings-card-grid settings-general-grid">
           <article className="surface-card panel-card action-card-section settings-card">
             <div className="panel-card-heading">
               <div>
                 <p className="section-kicker">Organizacion</p>
-                <h3>Identidad institucional</h3>
+                <h3>Datos institucionales</h3>
               </div>
               <span className="results-pill">{organization.organizationType}</span>
             </div>
@@ -363,7 +427,7 @@ export function SettingsWorkspace() {
 
             <div className="card-action-row">
               <button className="secondary-button card-action-button" onClick={openOrganizationModal} type="button">
-                Editar organizacion
+                Editar datos
               </button>
             </div>
           </article>
@@ -371,43 +435,78 @@ export function SettingsWorkspace() {
           <article className="surface-card panel-card action-card-section settings-card">
             <div className="panel-card-heading">
               <div>
-                <p className="section-kicker">Plataforma</p>
-                <h3>Limites y defaults</h3>
+                <p className="section-kicker">Administracion</p>
+                <h3>Parametros internos</h3>
               </div>
-              <span className="results-pill">{platform.defaultLanguage}</span>
+              <span className="results-pill">{system.defaultLanguage}</span>
             </div>
 
             <div className="detail-highlight-grid">
               <article>
                 <span>Idioma base</span>
-                <strong>{platform.defaultLanguage}</strong>
+                <strong>{system.defaultLanguage}</strong>
+              </article>
+              <article>
+                <span>Zona horaria</span>
+                <strong>{system.timezone}</strong>
               </article>
               <article>
                 <span>Limite de usuarios</span>
-                <strong>{platform.userLimit}</strong>
+                <strong>{system.userLimit}</strong>
               </article>
               <article>
-                <span>Limite de casos</span>
-                <strong>{platform.caseLimit.toLocaleString('es-PR')}</strong>
-              </article>
-              <article>
-                <span>Firma de reportes</span>
-                <strong>{platform.reportSignature}</strong>
+                <span>Limite de expedientes</span>
+                <strong>{system.caseLimit.toLocaleString('es-PR')}</strong>
               </article>
             </div>
 
             <dl className="definition-grid">
               <div>
-                <dt>Email de soporte</dt>
-                <dd>{platform.supportEmail}</dd>
+                <dt>Correo administrativo</dt>
+                <dd>{system.adminEmail}</dd>
+              </div>
+              <div>
+                <dt>Pie de reportes</dt>
+                <dd>{system.reportFooter}</dd>
               </div>
             </dl>
 
             <div className="card-action-row">
-              <button className="secondary-button card-action-button" onClick={openPlatformModal} type="button">
-                Ajustar plataforma
+              <button className="secondary-button card-action-button" onClick={openSystemModal} type="button">
+                Editar parametros
               </button>
             </div>
+          </article>
+
+          <article className="surface-card panel-card settings-card settings-system-card settings-tech-footer">
+            <div className="panel-card-heading">
+              <div>
+                <p className="section-kicker">Registro tecnico</p>
+                <h3>Referencia interna</h3>
+              </div>
+              <span className="results-pill">Solo sistema</span>
+            </div>
+
+            <div className="settings-tech-items">
+              <article className="settings-tech-item">
+                <span>Version</span>
+                <strong>{appVersion}</strong>
+              </article>
+              <article className="settings-tech-item">
+                <span>Entorno</span>
+                <strong>{environmentLabel}</strong>
+              </article>
+              <article className="settings-tech-item">
+                <span>Alojamiento</span>
+                <strong>{hostingLabel}</strong>
+              </article>
+              <article className="settings-tech-item">
+                <span>Datos</span>
+                <strong>Simulados</strong>
+              </article>
+            </div>
+
+            <p className="settings-tech-note">Uso interno. No muestra informacion de usuarios ni detalles sensibles del sistema.</p>
           </article>
         </section>
       ) : null}
@@ -416,21 +515,93 @@ export function SettingsWorkspace() {
         <section className="surface-card panel-card action-card-section settings-card">
           <div className="panel-card-heading">
             <div>
-              <p className="section-kicker">Usuarios</p>
-              <h3>Equipo con acceso al sistema</h3>
+              <p className="section-kicker">Personal</p>
+              <h3>Usuarios del sistema</h3>
             </div>
-            <span className="results-pill">{users.length} usuarios</span>
+            <div className="settings-panel-actions">
+              <span className="results-pill">{visibleUsers.length} usuarios</span>
+              <button className="primary-button card-action-button settings-top-action" onClick={openCreateUserModal} type="button">
+                Agregar usuario
+              </button>
+            </div>
           </div>
+
+          <article className="settings-current-user-card">
+            <div className="settings-current-user-hero">
+              <div className="settings-user-summary">
+                <span className="settings-user-avatar-frame settings-user-avatar-frame-large">
+                  <span className="settings-user-avatar">{getInitials(activeUserProfile.name)}</span>
+                </span>
+                <div className="settings-user-identity">
+                  <p className="section-kicker">Sesion activa</p>
+                  <strong>{activeUserProfile.name}</strong>
+                  <p>
+                    {activeUserProfile.title} · {activeUserProfile.email}
+                  </p>
+                </div>
+              </div>
+              <div className="settings-user-badges">
+                <span className={`badge ${getRoleBadgeClass(activeUserProfile.accessLevel)}`}>{accessLevelLabels[activeUserProfile.accessLevel]}</span>
+              </div>
+            </div>
+
+            <div className="settings-current-user-grid">
+              <div>
+                <span>Base operativa</span>
+                <strong>{activeUserProfile.location}</strong>
+              </div>
+              <div>
+                <span>Horario</span>
+                <strong>{activeUserProfile.schedule}</strong>
+              </div>
+              <div>
+                <span>Organizacion</span>
+                <strong>{activeUserProfile.organization}</strong>
+              </div>
+            </div>
+
+            <div className="settings-user-metrics">
+              {activeUserProfile.metrics.map((metric) => (
+                <article key={metric.label} className="settings-user-metric-card">
+                  <span>{metric.label}</span>
+                  <strong>{metric.value}</strong>
+                </article>
+              ))}
+            </div>
+
+            <p className="detail-summary settings-card-copy">{activeUserProfile.summary}</p>
+
+            <div className="settings-user-permissions">
+              {activeUserProfile.permissions.map((permission) => (
+                <span key={permission} className="settings-user-permission-chip">
+                  {permission}
+                </span>
+              ))}
+            </div>
+
+            {activeManagedUser ? (
+              <div className="card-action-row">
+                <button className="secondary-button card-action-button" onClick={() => openEditUserModal(activeManagedUser)} type="button">
+                  Editar usuario
+                </button>
+              </div>
+            ) : null}
+          </article>
 
           <div className="settings-user-list">
             {usersPagination.items.map((user) => (
               <article key={user.userId} className="settings-user-card">
                 <div className="settings-user-top">
-                  <div>
-                    <strong>{user.name}</strong>
-                    <p>
-                      {user.title} · {user.email}
-                    </p>
+                  <div className="settings-user-summary">
+                    <span className="settings-user-avatar-frame">
+                      <span className="settings-user-avatar">{getInitials(user.name)}</span>
+                    </span>
+                    <div className="settings-user-identity">
+                      <strong>{user.name}</strong>
+                      <p>
+                        {user.title} · {user.email}
+                      </p>
+                    </div>
                   </div>
                   <div className="settings-user-badges">
                     <span className={`badge ${getRoleBadgeClass(user.accessLevel)}`}>{accessLevelLabels[user.accessLevel]}</span>
@@ -464,150 +635,109 @@ export function SettingsWorkspace() {
             totalItems={usersPagination.totalItems}
             totalPages={usersPagination.totalPages}
           />
-
-          <div className="card-action-row">
-            <button className="primary-button card-action-button" onClick={openCreateUserModal} type="button">
-              Invitar usuario
-            </button>
-          </div>
         </section>
       ) : null}
 
       {activeTab === 'appearance' ? (
-        <section className="settings-card-grid">
-          <article className="surface-card panel-card action-card-section settings-card">
-            <div className="panel-card-heading">
-              <div>
-                <p className="section-kicker">Apariencia</p>
-                <h3>Paleta activa</h3>
-              </div>
-              <span className="results-pill">{activeThemePreset ? activeThemePreset.name : 'Personalizado'}</span>
+        <section className="surface-card panel-card action-card-section settings-card settings-appearance-card">
+          <div className="panel-card-heading">
+            <div>
+              <p className="section-kicker">Apariencia</p>
+              <h3>Colores del sistema</h3>
             </div>
-
-            <div className="settings-palette-section">
-              <div className="settings-palette-group">
-                <div className="section-heading">
-                  <h3>Temas claros</h3>
-                  <span>3 presets listos</span>
-                </div>
-                <div className="settings-palette-grid">
-                  {lightThemePresets.map((preset) => (
-                    <article
-                      key={preset.themeId}
-                      className={matchesTheme(theme, preset) ? 'settings-palette-card active' : 'settings-palette-card'}
-                    >
-                      <div className="settings-palette-top">
-                        <strong>{preset.name}</strong>
-                        <span className="badge role-manager">Claro</span>
-                      </div>
-                      <div className="settings-palette-swatches">
-                        <span style={{ backgroundColor: preset.bg }} />
-                        <span style={{ backgroundColor: preset.cardBgStrong }} />
-                        <span style={{ backgroundColor: preset.sidebarBg }} />
-                        <span style={{ backgroundColor: preset.accent }} />
-                        <span style={{ backgroundColor: preset.warm }} />
-                      </div>
-                      <div className="card-action-row">
-                        <button className="secondary-button card-action-button" onClick={() => applyThemePreset(preset)} type="button">
-                          Usar
-                        </button>
-                      </div>
-                    </article>
-                  ))}
-                </div>
-              </div>
-
-              <div className="settings-palette-group">
-                <div className="section-heading">
-                  <h3>Temas oscuros</h3>
-                  <span>3 presets listos</span>
-                </div>
-                <div className="settings-palette-grid">
-                  {darkThemePresets.map((preset) => (
-                    <article
-                      key={preset.themeId}
-                      className={matchesTheme(theme, preset) ? 'settings-palette-card active' : 'settings-palette-card'}
-                    >
-                      <div className="settings-palette-top">
-                        <strong>{preset.name}</strong>
-                        <span className="badge role-admin">Oscuro</span>
-                      </div>
-                      <div className="settings-palette-swatches">
-                        <span style={{ backgroundColor: preset.bg }} />
-                        <span style={{ backgroundColor: preset.cardBgStrong }} />
-                        <span style={{ backgroundColor: preset.sidebarBg }} />
-                        <span style={{ backgroundColor: preset.accent }} />
-                        <span style={{ backgroundColor: preset.warm }} />
-                      </div>
-                      <div className="card-action-row">
-                        <button className="secondary-button card-action-button" onClick={() => applyThemePreset(preset)} type="button">
-                          Usar
-                        </button>
-                      </div>
-                    </article>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            <div className="settings-swatch-grid">
-              {themeSwatches.map((swatch) => (
-                <article key={swatch.label} className="settings-swatch-card">
-                  <span className="settings-swatch-preview" style={{ backgroundColor: swatch.value }} />
-                  <div>
-                    <strong>{swatch.label}</strong>
-                    <p>{swatch.value}</p>
-                  </div>
-                </article>
-              ))}
-            </div>
-
-            <div className="card-action-row">
-              <button className="secondary-button card-action-button" onClick={openThemeModal} type="button">
+            <div className="settings-panel-actions">
+              <span className="results-pill">{selectedThemePreset ? selectedThemePreset.name : 'Personalizado'}</span>
+              <button className="secondary-button card-action-button settings-top-action" onClick={openThemeModal} type="button">
                 Editar colores
               </button>
             </div>
-          </article>
+          </div>
 
-          <article className="surface-card panel-card action-card-section settings-card">
-            <div className="panel-card-heading">
-              <div>
-                <p className="section-kicker">Preview</p>
-                <h3>Como se vera la interfaz</h3>
+          <div className="settings-swatch-grid settings-swatch-grid-compact">
+            {themeSwatches.map((swatch) => (
+              <article key={swatch.label} className="settings-swatch-card settings-swatch-card-compact">
+                <span className="settings-swatch-preview settings-swatch-preview-compact" style={{ backgroundColor: swatch.value }} />
+                <strong>{swatch.label}</strong>
+              </article>
+            ))}
+          </div>
+
+          <div className="settings-palette-section">
+            <div className="settings-palette-group">
+              <div className="section-heading">
+                <h3>Claros</h3>
+              </div>
+              <div className="settings-palette-grid settings-palette-grid-compact">
+                {lightThemePresets.map((preset) => (
+                  <button
+                    key={preset.themeId}
+                    className={
+                      matchesTheme(themeForm, preset)
+                        ? 'settings-palette-card settings-palette-card-compact settings-palette-card-selectable active'
+                        : 'settings-palette-card settings-palette-card-compact settings-palette-card-selectable'
+                    }
+                    onClick={() => applyThemePreset(preset)}
+                    type="button"
+                  >
+                    <div className="settings-palette-top">
+                      <strong>{preset.name}</strong>
+                      <span className="badge role-manager">Claro</span>
+                    </div>
+                    <div className="settings-palette-swatches settings-palette-swatches-animated">
+                      <span style={{ backgroundColor: preset.bg }} />
+                      <span style={{ backgroundColor: preset.cardBgStrong }} />
+                      <span style={{ backgroundColor: preset.sidebarBg }} />
+                      <span style={{ backgroundColor: preset.accent }} />
+                      <span style={{ backgroundColor: preset.warm }} />
+                    </div>
+                  </button>
+                ))}
               </div>
             </div>
 
-            <div className="theme-preview-card">
-              <div className="theme-preview-sidebar" style={{ backgroundColor: theme.sidebarBg }}>
-                <span style={{ backgroundColor: withAlpha(theme.accent, 0.15), color: getContrastColor(theme.accent) }}>Menu</span>
-                <strong style={{ color: getContrastColor(theme.sidebarBg) }}>SFM</strong>
+            <div className="settings-palette-group">
+              <div className="section-heading">
+                <h3>Oscuros</h3>
               </div>
-              <div className="theme-preview-main" style={{ backgroundColor: theme.cardBgStrong, color: theme.ink }}>
-                <span className="theme-preview-tag" style={{ backgroundColor: withAlpha(theme.accent, 0.12), color: darkenHex(theme.accent, 18) }}>
-                  Acento
-                </span>
-                <h4>Tarjeta de ejemplo</h4>
-                <p>
-                  {activeThemePreset
-                    ? `${activeThemePreset.name} esta aplicada ahora mismo.`
-                    : 'Los cambios guardados aqui actualizan los colores base del entorno actual.'}
-                </p>
-                <button
-                  className="theme-preview-button"
-                  style={{ backgroundColor: theme.warm, color: getContrastColor(theme.warm) }}
-                  type="button"
-                >
-                  Boton principal
-                </button>
+              <div className="settings-palette-grid settings-palette-grid-compact">
+                {darkThemePresets.map((preset) => (
+                  <button
+                    key={preset.themeId}
+                    className={
+                      matchesTheme(themeForm, preset)
+                        ? 'settings-palette-card settings-palette-card-compact settings-palette-card-selectable active'
+                        : 'settings-palette-card settings-palette-card-compact settings-palette-card-selectable'
+                    }
+                    onClick={() => applyThemePreset(preset)}
+                    type="button"
+                  >
+                    <div className="settings-palette-top">
+                      <strong>{preset.name}</strong>
+                      <span className="badge role-admin">Oscuro</span>
+                    </div>
+                    <div className="settings-palette-swatches settings-palette-swatches-animated">
+                      <span style={{ backgroundColor: preset.bg }} />
+                      <span style={{ backgroundColor: preset.cardBgStrong }} />
+                      <span style={{ backgroundColor: preset.sidebarBg }} />
+                      <span style={{ backgroundColor: preset.accent }} />
+                      <span style={{ backgroundColor: preset.warm }} />
+                    </div>
+                  </button>
+                ))}
               </div>
             </div>
+          </div>
 
-            <div className="card-action-row">
-              <button className="secondary-button card-action-button" onClick={openThemeModal} type="button">
-                Ajustar preview
-              </button>
-            </div>
-          </article>
+          <div className="card-action-row">
+            <button
+              className="primary-button card-action-button settings-palette-save-button"
+              disabled={isSameTheme(theme, themeForm)}
+              onClick={() => setTheme(themeForm)}
+              type="button"
+            >
+              Guardar cambios
+            </button>
+          </div>
         </section>
       ) : null}
 
@@ -616,8 +746,8 @@ export function SettingsWorkspace() {
           <article className="surface-card panel-card action-card-section settings-card">
             <div className="panel-card-heading">
               <div>
-                <p className="section-kicker">Roles</p>
-                <h3>Visibilidad de modulos</h3>
+                <p className="section-kicker">Permisos</p>
+                <h3>Acceso por modulo</h3>
               </div>
               <span className="results-pill">Reglas activas</span>
             </div>
@@ -636,7 +766,7 @@ export function SettingsWorkspace() {
 
             <div className="card-action-row">
               <button className="secondary-button card-action-button" onClick={openAccessModal} type="button">
-                Editar reglas
+                Editar permisos
               </button>
             </div>
           </article>
@@ -644,33 +774,33 @@ export function SettingsWorkspace() {
           <article className="surface-card panel-card action-card-section settings-card">
             <div className="panel-card-heading">
               <div>
-                <p className="section-kicker">Gobernanza</p>
-                <h3>Acceso a configuracion</h3>
+                <p className="section-kicker">Control</p>
+                <h3>Politica de acceso</h3>
               </div>
-              <span className={`badge ${getRoleBadgeClass(currentUser.accessLevel)}`}>{accessLevelLabels[currentUser.accessLevel]}</span>
+              <span className="results-pill">Acceso restringido</span>
             </div>
 
             <p className="detail-summary settings-card-copy">
-              La pagina de configuracion solo debe mostrarse a perfiles con rol admin o superior. El sidebar ya aplica esa regla y esta
-              vista sirve como referencia para futuras validaciones reales con autenticacion.
+              La configuracion es un espacio de administracion interna. Solo debe estar disponible para perfiles con autoridad administrativa
+              y esta regla ya se refleja en el menu lateral.
             </p>
 
             <dl className="definition-grid">
               <div>
-                <dt>Usuario actual</dt>
-                <dd>{currentUser.name}</dd>
+                <dt>Rol minimo</dt>
+                <dd>Admin</dd>
               </div>
               <div>
-                <dt>Rol actual</dt>
-                <dd>{accessLevelLabels[currentUser.accessLevel]}</dd>
+                <dt>Menu lateral</dt>
+                <dd>Visible solo para administracion</dd>
               </div>
               <div>
-                <dt>Permisos destacados</dt>
-                <dd>{currentUser.permissions.join(', ')}</dd>
+                <dt>Acceso por ruta</dt>
+                <dd>Bloqueado para perfiles sin permiso</dd>
               </div>
               <div>
-                <dt>Organizacion</dt>
-                <dd>{currentUser.organization}</dd>
+                <dt>Notas sensibles</dt>
+                <dd>Disponibles solo para roles autorizados</dd>
               </div>
             </dl>
           </article>
@@ -678,7 +808,7 @@ export function SettingsWorkspace() {
       ) : null}
 
       <AppModal
-        description="Actualiza la identidad visible de la organizacion y su informacion principal."
+        description="Actualiza los datos principales de la organizacion."
         onClose={() => setOrganizationModalOpen(false)}
         open={isOrganizationModalOpen}
         title="Editar organizacion"
@@ -815,37 +945,47 @@ export function SettingsWorkspace() {
               Cancelar
             </button>
             <button className="primary-button card-action-button" type="submit">
-              Guardar organizacion
+              Guardar cambios
             </button>
           </div>
         </form>
       </AppModal>
 
       <AppModal
-        description="Ajusta limites y defaults operativos visibles para el equipo."
-        onClose={() => setPlatformModalOpen(false)}
-        open={isPlatformModalOpen}
-        title="Ajustar plataforma"
+        description="Ajusta los parametros internos de administracion del sistema."
+        onClose={() => setSystemModalOpen(false)}
+        open={isSystemModalOpen}
+        title="Editar parametros internos"
       >
-        <form className="record-form modal-form" onSubmit={handlePlatformSubmit}>
+        <form className="record-form modal-form" onSubmit={handleSystemSubmit}>
           <div className="record-form-grid">
             <label className="field">
               Idioma por defecto
               <input
                 required
                 type="text"
-                value={platformForm.defaultLanguage}
-                onChange={(event) => setPlatformForm((current) => ({ ...current, defaultLanguage: event.target.value }))}
+                value={systemForm.defaultLanguage}
+                onChange={(event) => setSystemForm((current) => ({ ...current, defaultLanguage: event.target.value }))}
               />
             </label>
 
             <label className="field">
-              Email de soporte
+              Zona horaria
+              <input
+                required
+                type="text"
+                value={systemForm.timezone}
+                onChange={(event) => setSystemForm((current) => ({ ...current, timezone: event.target.value }))}
+              />
+            </label>
+
+            <label className="field">
+              Correo administrativo
               <input
                 required
                 type="email"
-                value={platformForm.supportEmail}
-                onChange={(event) => setPlatformForm((current) => ({ ...current, supportEmail: event.target.value }))}
+                value={systemForm.adminEmail}
+                onChange={(event) => setSystemForm((current) => ({ ...current, adminEmail: event.target.value }))}
               />
             </label>
 
@@ -855,49 +995,49 @@ export function SettingsWorkspace() {
                 min={1}
                 required
                 type="number"
-                value={platformForm.userLimit}
-                onChange={(event) => setPlatformForm((current) => ({ ...current, userLimit: Number(event.target.value) }))}
+                value={systemForm.userLimit}
+                onChange={(event) => setSystemForm((current) => ({ ...current, userLimit: Number(event.target.value) }))}
               />
             </label>
 
             <label className="field">
-              Limite de casos
+              Limite de expedientes
               <input
                 min={1}
                 required
                 type="number"
-                value={platformForm.caseLimit}
-                onChange={(event) => setPlatformForm((current) => ({ ...current, caseLimit: Number(event.target.value) }))}
+                value={systemForm.caseLimit}
+                onChange={(event) => setSystemForm((current) => ({ ...current, caseLimit: Number(event.target.value) }))}
               />
             </label>
           </div>
 
           <label className="field">
-            Firma de reportes
+            Pie de reportes
             <input
               required
               type="text"
-              value={platformForm.reportSignature}
-              onChange={(event) => setPlatformForm((current) => ({ ...current, reportSignature: event.target.value }))}
+              value={systemForm.reportFooter}
+              onChange={(event) => setSystemForm((current) => ({ ...current, reportFooter: event.target.value }))}
             />
           </label>
 
           <div className="form-actions modal-actions">
-            <button className="secondary-button card-action-button" onClick={() => setPlatformModalOpen(false)} type="button">
+            <button className="secondary-button card-action-button" onClick={() => setSystemModalOpen(false)} type="button">
               Cancelar
             </button>
             <button className="primary-button card-action-button" type="submit">
-              Guardar plataforma
+              Guardar cambios
             </button>
           </div>
         </form>
       </AppModal>
 
       <AppModal
-        description="Invita usuarios nuevos o ajusta rol y estado sin saturar la pagina."
+        description="Invita personal nuevo o ajusta su rol y estado."
         onClose={() => setUserModalOpen(false)}
         open={isUserModalOpen}
-        title={editingUserId ? 'Editar usuario' : 'Invitar usuario'}
+        title={editingUserId ? 'Editar usuario' : 'Agregar usuario'}
       >
         <form className="record-form modal-form" onSubmit={handleUserSubmit}>
           <div className="record-form-grid">
@@ -973,17 +1113,17 @@ export function SettingsWorkspace() {
               Cancelar
             </button>
             <button className="primary-button card-action-button" type="submit">
-              {editingUserId ? 'Guardar usuario' : 'Crear invitacion'}
+              {editingUserId ? 'Guardar cambios' : 'Enviar invitacion'}
             </button>
           </div>
         </form>
       </AppModal>
 
       <AppModal
-        description="Estos colores se aplican al entorno actual para previsualizar la identidad de la organizacion."
+        description="Ajusta los colores base de la interfaz."
         onClose={() => setThemeModalOpen(false)}
         open={isThemeModalOpen}
-        title="Editar colores"
+        title="Editar tema"
       >
         <form className="record-form modal-form" onSubmit={handleThemeSubmit}>
           <div className="settings-color-grid">
@@ -1051,10 +1191,10 @@ export function SettingsWorkspace() {
       </AppModal>
 
       <AppModal
-        description="Define el rol minimo necesario para que cada modulo aparezca en la interfaz."
+        description="Define el rol minimo necesario para cada modulo."
         onClose={() => setAccessModalOpen(false)}
         open={isAccessModalOpen}
-        title="Editar reglas de acceso"
+        title="Editar permisos"
       >
         <form className="record-form modal-form" onSubmit={handleAccessSubmit}>
           <div className="settings-access-form">

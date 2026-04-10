@@ -61,8 +61,8 @@ export default function ReportsPage() {
     <section className="page-stack">
       <PageHeader
         eyebrow="Reportes"
-        title="Biblioteca de reportes"
-        description="Los reportes salen del mismo modelo de participantes, casos, propuestas y servicios. Aqui vive el historial guardado y los resúmenes listos para exportar."
+        title="Reportes"
+        description="Consulta reportes guardados y prepara nuevos resumenes del programa."
         actions={
           <button className="primary-button" onClick={openCreateReportModal} type="button">
             Crear reporte
@@ -74,25 +74,25 @@ export default function ReportsPage() {
         <article className="summary-card">
           <span>Participantes atendidos</span>
           <strong>{metrics.participantCount}</strong>
-          <p>Total de perfiles vinculados al sistema.</p>
+          <p>Total de participantes vinculados.</p>
         </article>
         <article className="summary-card">
-          <span>Casos sensibles</span>
+          <span>Expedientes sensibles</span>
           <strong>{metrics.sensitiveCases}</strong>
-          <p>Expedientes que exigen control reforzado.</p>
+          <p>Expedientes que requieren manejo reforzado.</p>
         </article>
         <article className="summary-card">
-          <span>Servicios completados</span>
+          <span>Servicios cerrados</span>
           <strong>{metrics.completedAssignments}</strong>
-          <p>Cierres disponibles para auditoria y analisis.</p>
+          <p>Servicios listos para auditoria.</p>
         </article>
       </section>
 
       <section className="surface-card panel-card">
         <div className="panel-card-heading">
           <div>
-            <p className="section-kicker">Guardados</p>
-            <h3>Reportes recientes</h3>
+            <p className="section-kicker">Archivo</p>
+            <h3>Reportes disponibles</h3>
           </div>
           <span className="results-pill">{reportRecords.length} archivos</span>
         </div>
@@ -128,7 +128,7 @@ export default function ReportsPage() {
       </section>
 
       <AppModal
-        description="Crea un reporte nuevo desde un modal para mantener la biblioteca visualmente ligera."
+        description="Registra un reporte nuevo desde esta misma vista."
         onClose={() => setCreateReportModalOpen(false)}
         open={isCreateReportModalOpen}
         title="Crear reporte"

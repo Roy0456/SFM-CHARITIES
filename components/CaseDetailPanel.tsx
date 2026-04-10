@@ -35,8 +35,8 @@ export function CaseDetailPanel({
     return (
       <aside className="detail-card surface-card">
         <div className="empty-state">
-          <h4>Selecciona un caso</h4>
-          <p>El panel derecho mostrara participante, servicios, documentos y bitacora del expediente seleccionado.</p>
+          <h4>Selecciona un expediente</h4>
+          <p>Aqui veras el resumen del caso, los servicios y el acceso al detalle completo.</p>
         </div>
       </aside>
     );
@@ -103,7 +103,7 @@ export function CaseDetailPanel({
         <section className="info-panel info-panel-profile">
           <div className="info-panel-header">
             <p className="info-panel-kicker">Participante</p>
-            <h3>Perfil del participante</h3>
+            <h3>Datos del participante</h3>
           </div>
           <dl className="definition-list">
             <div>
@@ -174,8 +174,8 @@ export function CaseDetailPanel({
 
       <section className="detail-section">
         <div className="section-heading">
-          <h3>Servicios activos en vista</h3>
-          <span>Resumen rapido</span>
+          <h3>Servicios asignados</h3>
+          <span>Vista rapida</span>
         </div>
         <div className="service-stack">
           {previewServices.map((service) => (

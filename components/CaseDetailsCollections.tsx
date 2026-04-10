@@ -78,7 +78,7 @@ export function CaseDetailsCollections({
         {services.length === 0 ? (
           <div className="empty-state">
             <h4>Este expediente no tiene servicios</h4>
-            <p>Cuando se asignen apoyos desde propuestas y servicios, apareceran aqui.</p>
+            <p>Los servicios asignados a este expediente apareceran aqui.</p>
           </div>
         ) : (
           <>
@@ -139,14 +139,14 @@ export function CaseDetailsCollections({
       <section className="detail-page-grid">
         <section className="surface-card detail-block action-card-section">
           <div className="section-heading">
-            <h3>Notas recientes</h3>
+            <h3>Notas del expediente</h3>
             <span>{notes.length} registradas</span>
           </div>
 
           {notes.length === 0 ? (
             <div className="empty-state">
               <h4>No hay notas registradas</h4>
-              <p>Las notas clinicas, sensibles o de seguimiento apareceran aqui.</p>
+              <p>Las notas de seguimiento o manejo sensible apareceran aqui.</p>
             </div>
           ) : (
             <>
@@ -187,14 +187,14 @@ export function CaseDetailsCollections({
 
         <section className="surface-card detail-block action-card-section">
           <div className="section-heading">
-            <h3>Documentos recientes</h3>
+            <h3>Documentos del expediente</h3>
             <span>{documents.length} cargados</span>
           </div>
 
           {documents.length === 0 ? (
             <div className="empty-state">
               <h4>No hay documentos cargados</h4>
-              <p>Los formularios, referidos y archivos adjuntos del expediente apareceran aqui.</p>
+              <p>Los formularios, referidos y otros archivos del expediente apareceran aqui.</p>
             </div>
           ) : (
             <>
@@ -238,14 +238,14 @@ export function CaseDetailsCollections({
 
       <section className="surface-card detail-block">
         <div className="section-heading">
-          <h3>Ultimos eventos de bitacora</h3>
+          <h3>Bitacora del expediente</h3>
           <span>{history.length} eventos</span>
         </div>
 
         {history.length === 0 ? (
           <div className="empty-state">
             <h4>No hay eventos en la bitacora</h4>
-            <p>Los cambios importantes del expediente apareceran aqui cuando existan.</p>
+            <p>Los cambios importantes del expediente apareceran aqui.</p>
           </div>
         ) : (
           <>

@@ -36,9 +36,8 @@ export function Filters({ state, onChange, onReset, resultsCount, managers, citi
     <section className="filters-card surface-card">
       <div className="filters-topline">
         <div>
-          <p className="section-kicker">Busqueda operacional</p>
-          <h3>Encuentra el expediente correcto</h3>
-          <p className="section-copy">Filtra por caso, participante, gestor, propuesta o servicio.</p>
+          <p className="section-kicker">Busqueda de expedientes</p>
+          <h3>Filtrar casos</h3>
         </div>
         <span className="results-pill">{resultsCount} resultados</span>
       </div>
@@ -58,12 +57,12 @@ export function Filters({ state, onChange, onReset, resultsCount, managers, citi
 
       <div className="filters-grid">
         <label className="field field-search">
-          Buscar caso o participante
+          Buscar
           <input
             type="text"
             value={state.search}
             onChange={(event) => onChange({ ...state, search: event.target.value })}
-            placeholder="Ej. Mar26-398023, Gilberto, orientacion legal"
+            placeholder="Numero de caso, participante o servicio"
           />
         </label>
 

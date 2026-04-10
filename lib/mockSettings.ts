@@ -15,12 +15,13 @@ export type OrganizationSettings = {
   incorporationCertificate: string;
 };
 
-export type PlatformSettings = {
+export type SystemSettings = {
   userLimit: number;
   caseLimit: number;
   defaultLanguage: string;
-  reportSignature: string;
-  supportEmail: string;
+  timezone: string;
+  adminEmail: string;
+  reportFooter: string;
 };
 
 export type ManagedUserStatus = 'active' | 'invited' | 'paused';
@@ -84,12 +85,13 @@ export const organizationSettings: OrganizationSettings = {
   incorporationCertificate: '410743',
 };
 
-export const platformSettings: PlatformSettings = {
+export const systemSettings: SystemSettings = {
   userLimit: 12,
   caseLimit: 1500,
   defaultLanguage: 'Espanol',
-  reportSignature: 'SFM Charities · Centro Operacional',
-  supportEmail: 'soporte@sfmcharities.org',
+  timezone: 'America/Puerto_Rico',
+  adminEmail: 'administracion@sfmcharities.org',
+  reportFooter: 'SFM Charities · Registro institucional',
 };
 
 export const managedUsers: ManagedUser[] = [

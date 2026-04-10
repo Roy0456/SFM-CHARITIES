@@ -212,7 +212,7 @@ export function CaseDetailsWorkspace({ details }: { details: CaseDetailsRecord }
       <PageHeader
         eyebrow="Expediente"
         title={`${caseItem.caseNumber} · ${caseItem.participant.fullName}`}
-        description="Vista detallada del caso, siguiendo la estructura principal del sistema: caso, servicios, notas, documentos y bitacora."
+        description="Detalle del expediente con servicios, notas, documentos y bitacora del caso."
         actions={
           <Link className="secondary-button" href="/">
             Volver a casos
@@ -222,17 +222,17 @@ export function CaseDetailsWorkspace({ details }: { details: CaseDetailsRecord }
 
       <section className="summary-grid">
         <article className="summary-card">
-          <span>Estado del caso</span>
+          <span>Estado del expediente</span>
           <strong>{caseStatusLabels[caseItem.status]}</strong>
           <p>Gestor: {caseItem.caseManager}</p>
         </article>
         <article className="summary-card">
-          <span>Notas registradas</span>
+          <span>Notas del expediente</span>
           <strong>{metrics.notesCount}</strong>
-          <p>Incluye notas sensibles e internas del expediente.</p>
+          <p>Incluye notas internas y sensibles.</p>
         </article>
         <article className="summary-card">
-          <span>Documentos y eventos</span>
+          <span>Documentos y bitacora</span>
           <strong>{metrics.documentsCount + metrics.historyCount}</strong>
           <p>
             {metrics.documentsCount} documentos y {metrics.historyCount} eventos de bitacora.
@@ -339,7 +339,7 @@ export function CaseDetailsWorkspace({ details }: { details: CaseDetailsRecord }
 
           <div className="card-action-row">
             <button className="secondary-button card-action-button" onClick={openParticipantModal} type="button">
-              Editar participante
+              Editar datos del participante
             </button>
           </div>
         </section>

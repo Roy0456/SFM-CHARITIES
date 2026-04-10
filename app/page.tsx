@@ -206,8 +206,8 @@ export default function HomePage() {
     <section className="page-stack">
       <PageHeader
         eyebrow="Casos"
-        title="Mesa de trabajo"
-        description="Busca expedientes, revisa el detalle del caso seleccionado y da seguimiento sin mezclar propuestas, reportes y otras vistas en la misma pantalla."
+        title="Operacion diaria"
+        description="Busca expedientes, revisa el resumen del caso y entra al detalle completo desde una sola vista."
         actions={
           <button className="primary-button" onClick={openCreateCaseModal} type="button">
             Nuevo caso
@@ -217,19 +217,19 @@ export default function HomePage() {
 
       <section className="summary-grid">
         <article className="summary-card">
-          <span>Casos visibles</span>
+          <span>Expedientes en pantalla</span>
           <strong>{metrics.totalCases}</strong>
-          <p>Resultados actuales segun tus filtros.</p>
+          <p>Expedientes dentro de la vista actual.</p>
         </article>
         <article className="summary-card">
-          <span>Activos y pendientes</span>
+          <span>Pendientes de gestion</span>
           <strong>{metrics.activeCases + metrics.pendingCases}</strong>
-          <p>Expedientes que requieren seguimiento operativo.</p>
+          <p>Expedientes activos o pendientes.</p>
         </article>
         <article className="summary-card">
-          <span>Servicios abiertos</span>
+          <span>Servicios en proceso</span>
           <strong>{metrics.openAssignments}</strong>
-          <p>Asignaciones activas o pendientes ligadas a los casos visibles.</p>
+          <p>Asignaciones activas o pendientes.</p>
         </article>
       </section>
 
@@ -269,7 +269,7 @@ export default function HomePage() {
       </section>
 
       <AppModal
-        description="Crea un expediente nuevo sin romper el flujo principal de la mesa de trabajo."
+        description="Registra un expediente nuevo sin salir de la operacion diaria."
         onClose={() => setCreateCaseModalOpen(false)}
         open={isCreateCaseModalOpen}
         title="Nuevo caso"

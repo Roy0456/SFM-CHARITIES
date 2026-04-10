@@ -85,11 +85,11 @@ export function Sidebar({ version }: { version: string }) {
     description: string;
     icon: IconName;
   }> = [
-    { href: '/', label: 'Casos', description: 'Mesa principal', icon: 'cases' },
+    { href: '/', label: 'Casos', description: 'Operacion diaria', icon: 'cases' },
     { href: '/proposals', label: 'Propuestas', description: 'Fondos y servicios', icon: 'proposals' },
-    { href: '/reports', label: 'Reportes', description: 'Guardados y exportables', icon: 'reports' },
+    { href: '/reports', label: 'Reportes', description: 'Analisis y exportacion', icon: 'reports' },
     ...(canAccessSettings(currentUser)
-      ? [{ href: '/settings', label: 'Configuracion', description: 'Usuarios y apariencia', icon: 'settings' as const }]
+      ? [{ href: '/settings', label: 'Configuracion', description: 'Sistema y usuarios', icon: 'settings' as const }]
       : []),
   ];
 
@@ -110,7 +110,7 @@ export function Sidebar({ version }: { version: string }) {
         <div className="sidebar-top">
           <div className="sidebar-brand">
             <p>{isCollapsed ? 'Menu' : 'SFM Charities'}</p>
-            <h2>{isCollapsed ? 'SFM' : 'Centro Operacional'}</h2>
+            <h2>{isCollapsed ? 'SFM' : 'Centro de gestion'}</h2>
           </div>
 
           <button
@@ -174,16 +174,16 @@ export function Sidebar({ version }: { version: string }) {
       </aside>
 
       <AppModal
-        description="Perfil operativo del usuario actual, con su alcance dentro del sistema."
+        description="Informacion del usuario y nivel de acceso en esta sesion."
         onClose={() => setUserModalOpen(false)}
         open={isUserModalOpen}
-        title="Usuario actual"
+        title="Perfil del usuario"
       >
         <div className="user-modal-grid">
           <section className="user-modal-hero">
             <span className="user-modal-avatar">{getInitials(currentUser.name)}</span>
             <div className="user-modal-copy">
-              <p className="section-kicker">Perfil activo</p>
+              <p className="section-kicker">Usuario activo</p>
               <h3>{currentUser.name}</h3>
               <p>
                 {currentUser.title} · {currentUser.location}
@@ -205,7 +205,7 @@ export function Sidebar({ version }: { version: string }) {
 
           <section className="user-modal-card">
             <div className="section-heading">
-              <h3>Contacto y disponibilidad</h3>
+              <h3>Contacto</h3>
             </div>
             <dl className="definition-grid">
               <div>
@@ -229,7 +229,7 @@ export function Sidebar({ version }: { version: string }) {
 
           <section className="user-modal-card">
             <div className="section-heading">
-              <h3>Accesos en esta sesion</h3>
+              <h3>Accesos del sistema</h3>
             </div>
             <div className="user-permission-list">
               {currentUser.permissions.map((permission) => (
@@ -241,7 +241,7 @@ export function Sidebar({ version }: { version: string }) {
             {canAccessSettings(currentUser) ? (
               <div className="card-action-row">
                 <Link className="secondary-button card-action-button" href="/settings" onClick={() => setUserModalOpen(false)}>
-                  Abrir configuracion
+                  Abrir ajustes
                 </Link>
               </div>
             ) : null}

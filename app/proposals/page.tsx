@@ -100,18 +100,18 @@ export default function ProposalsPage() {
   return (
     <section className="page-stack">
       <PageHeader
-        eyebrow="Propuestas"
-        title="Propuestas y servicios"
-        description="Selecciona una propuesta y luego un servicio para ver solo los casos y participantes atendidos bajo esa combinacion. Esta vista prepara mejor los reportes por fondo y servicio."
+        eyebrow="Fondos"
+        title="Fondos y servicios"
+        description="Selecciona una propuesta y luego el servicio para ver los expedientes vinculados."
       />
 
       <section className="split-layout">
         <div className="panel-card surface-card">
           <div className="panel-card-heading">
-            <div>
-              <p className="section-kicker">Portafolio</p>
-              <h3>Propuestas activas e historicas</h3>
-            </div>
+              <div>
+                <p className="section-kicker">Fondos</p>
+                <h3>Propuestas disponibles</h3>
+              </div>
             <span className="results-pill">{snapshots.length} propuestas</span>
           </div>
 
@@ -131,7 +131,7 @@ export default function ProposalsPage() {
                 </div>
                 <div className="proposal-selector-meta">
                   <span className={`badge proposal-${proposal.status}`}>{proposalStatusLabel[proposal.status]}</span>
-                  <small>{proposal.caseCount} casos</small>
+                  <small>{proposal.caseCount} expedientes</small>
                 </div>
               </button>
             ))}
@@ -155,7 +155,7 @@ export default function ProposalsPage() {
           <section className="surface-card panel-card">
             <div className="detail-header">
               <div>
-                <p className="section-kicker">Detalle de propuesta</p>
+                <p className="section-kicker">Resumen de la propuesta</p>
                 <h2>
                   {selectedProposal.proposalCode} · {selectedProposal.proposalName}
                 </h2>
@@ -172,12 +172,12 @@ export default function ProposalsPage() {
               <article className="summary-card">
                 <span>Participantes</span>
                 <strong>{selectedProposal.participantCount}</strong>
-                <p>Participantes unicos vinculados.</p>
+                <p>Participantes vinculados a esta propuesta.</p>
               </article>
               <article className="summary-card">
-                <span>Casos</span>
+                <span>Expedientes</span>
                 <strong>{selectedProposal.caseCount}</strong>
-                <p>Expedientes que tocan esta propuesta.</p>
+                <p>Expedientes vinculados a esta propuesta.</p>
               </article>
               <article className="summary-card">
                 <span>Servicios abiertos</span>
@@ -190,16 +190,13 @@ export default function ProposalsPage() {
           <section className="surface-card panel-card">
             <div className="panel-card-heading">
               <div>
-                <p className="section-kicker">Paso 2</p>
-                <h3>Selecciona el servicio</h3>
+                <p className="section-kicker">Servicio</p>
+                <h3>Selecciona un servicio</h3>
               </div>
               <span className="results-pill">{selectedProposal.services.length} servicios</span>
             </div>
 
-            <p className="section-copy">
-              Todas las propuestas pueden usarse como fuente de reporte. Aqui eliges el servicio para bajar la vista a los casos que
-              realmente lo recibieron bajo {selectedProposal.proposalCode}.
-            </p>
+            <p className="section-copy">Escoge el servicio que deseas revisar o reportar dentro de esta propuesta.</p>
 
             <div className="service-selector-grid">
               {servicesPagination.items.map((service) => (
@@ -214,7 +211,7 @@ export default function ProposalsPage() {
                       <p className="service-selector-eyebrow">{service.serviceCode}</p>
                       <h4>{service.serviceName}</h4>
                     </div>
-                    {service.serviceId === selectedService?.serviceId ? <span className="badge proposal-active">En foco</span> : null}
+                    {service.serviceId === selectedService?.serviceId ? <span className="badge proposal-active">Seleccionado</span> : null}
                   </div>
                   <p>{service.description}</p>
                   <div className="service-selector-stats">
@@ -243,10 +240,10 @@ export default function ProposalsPage() {
           <section className="surface-card panel-card">
             <div className="panel-card-heading">
               <div>
-                <p className="section-kicker">Paso 3</p>
-                <h3>Casos bajo el servicio seleccionado</h3>
+                <p className="section-kicker">Expedientes</p>
+                <h3>Expedientes vinculados</h3>
               </div>
-              <span className="results-pill">{selectedServiceCases.length} casos</span>
+              <span className="results-pill">{selectedServiceCases.length} expedientes</span>
             </div>
 
             {selectedService ? (
@@ -269,7 +266,7 @@ export default function ProposalsPage() {
                     <strong>{selectedServiceParticipantCount}</strong>
                   </article>
                   <article>
-                    <span>Casos</span>
+                    <span>Expedientes</span>
                     <strong>{selectedServiceCases.length}</strong>
                   </article>
                   <article>
@@ -286,8 +283,8 @@ export default function ProposalsPage() {
 
             {selectedServiceCases.length === 0 ? (
               <div className="empty-state">
-                <h4>No hay casos bajo este cruce</h4>
-                <p>Selecciona otro servicio o propuesta para revisar los expedientes atendidos.</p>
+                <h4>No hay expedientes para esta seleccion</h4>
+                <p>Cambia la propuesta o el servicio para revisar otros expedientes.</p>
               </div>
             ) : (
               <>
@@ -320,7 +317,7 @@ export default function ProposalsPage() {
 
                 <PaginationControls
                   endItem={serviceCasesPagination.endItem}
-                  itemLabel="casos"
+                  itemLabel="expedientes"
                   onPageChange={serviceCasesPagination.setPage}
                   onPageSizeChange={serviceCasesPagination.setPageSize}
                   page={serviceCasesPagination.page}
